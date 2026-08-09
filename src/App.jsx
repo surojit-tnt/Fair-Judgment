@@ -18,20 +18,8 @@ import Copilot from "@/pages/Copilot.jsx"
 import Settings from "@/pages/Settings.jsx"
 import Compliance from "@/pages/Compliance.jsx"
 
-// This mirrors the original Next.js `app/` routing:
-//   app/page.tsx                        -> "/"
-//   app/(auth)/login/page.tsx           -> "/login"
-//   app/(auth)/signup/page.tsx          -> "/signup"
-//   app/(dashboard)/dashboard/page.tsx  -> "/dashboard"
-//   app/(dashboard)/upload/page.tsx     -> "/upload"
-//   app/(dashboard)/cases/page.tsx      -> "/cases"
-//   app/(dashboard)/cases/[id]/page.tsx -> "/cases/:id"
-//   app/(dashboard)/compare/page.tsx    -> "/compare"
-//   app/(dashboard)/pending-review/...  -> "/pending-review"
-//   app/(dashboard)/analytics/page.tsx  -> "/analytics"
-//   app/(dashboard)/copilot/page.tsx    -> "/copilot"
-//   app/(dashboard)/settings/page.tsx   -> "/settings"
-//   app/(dashboard)/compliance/page.tsx -> "/compliance"
+
+
 export default function App() {
   return (
     <Routes>
@@ -40,8 +28,7 @@ export default function App() {
       <Route path="/signup" element={<Signup />} />
 
       <Route element={<DashboardLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/upload" element={<Upload />} />
+        <Route path="/dashboard" element={<Dashboard />} />       <Route path="/upload" element={<Upload />} />
         <Route path="/cases" element={<Cases />} />
         <Route path="/cases/:id" element={<CaseDetail />} />
         <Route path="/compare" element={<Compare />} />
