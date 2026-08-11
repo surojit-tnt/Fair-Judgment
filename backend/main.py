@@ -1,7 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from uploads.models import Document
 
+from uploads.docsdb import Base, engine
+from uploads.documentsupload import router as document_router
 from database import engine, Base, get_db
 from models import User
 from schemas import RegisterRequest, LoginRequest
@@ -82,3 +85,5 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             "email": user.email
         }
     }
+
+app.include_router(document_router)
