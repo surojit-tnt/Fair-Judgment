@@ -23,7 +23,7 @@ class Document(Base):
         String,
         nullable=False
     )
-
+    extracted_text = Column(String, nullable=True)
     uploaded_at = Column(
         DateTime,
         default=datetime.utcnow

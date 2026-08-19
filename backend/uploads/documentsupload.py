@@ -1,3 +1,4 @@
+from uploads.pdf_extractor import extract_text_from_pdf
 import os
 import shutil
 from uuid import uuid4
@@ -12,15 +13,14 @@ from fastapi import (
 
 from sqlalchemy.orm import Session
 
-from .docsdb import get_db
-from .models import Document
+from database import get_db
+from models import Document
 
 
 router = APIRouter(
     prefix="/documents",
-    tags=["Documents"]
+    tags=["documents"]
 )
-
 
 UPLOAD_FOLDER = "uploads"
 
@@ -32,7 +32,6 @@ async def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-
     # Check PDF
     if file.content_type != "application/pdf":
         raise HTTPException(
@@ -55,16 +54,22 @@ async def upload_document(
             buffer
         )
 
+    # Extract text from PDF
+    extracted_text = extract_text_from_pdf(file_path)
+
     # Save metadata in PostgreSQL
     document = Document(
         filename=file.filename,
-        file_path=file_path
+        file_path=file_path,
+        extracted_text=extracted_text
     )
 
+    # Save record in PostgreSQL
     db.add(document)
     db.commit()
     db.refresh(document)
 
+    # Return response
     return {
         "message": "PDF uploaded successfully",
         "document_id": document.id,
@@ -77,7 +82,6 @@ async def upload_document(
 def get_documents(
     db: Session = Depends(get_db)
 ):
-
     documents = db.query(Document).all()
 
     return documents
