@@ -1,4 +1,5 @@
 from uploads.pdf_extractor import extract_text_from_pdf
+from services.gemini_service import analyze_judgment
 import os
 import shutil
 from uuid import uuid4
@@ -56,6 +57,9 @@ async def upload_document(
 
     # Extract text from PDF
     extracted_text = extract_text_from_pdf(file_path)
+    # Analyze extracted text using Gemini
+    analysis = analyze_judgment(extracted_text)
+
 
     # Save metadata in PostgreSQL
     document = Document(
@@ -71,11 +75,12 @@ async def upload_document(
 
     # Return response
     return {
-        "message": "PDF uploaded successfully",
-        "document_id": document.id,
-        "filename": document.filename,
-        "file_path": document.file_path
-    }
+    "message": "PDF analyzed successfully",
+    "document_id": document.id,
+    "filename": document.filename,
+    "file_path": document.file_path,
+    "analysis": analysis
+}
 
 
 @router.get("/")

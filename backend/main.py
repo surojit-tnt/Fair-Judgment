@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from models import User, Document
+from models import User, Document, Case
 from uploads.documentsupload import router as document_router
 from database import engine, Base, get_db
 
@@ -86,3 +86,24 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     }
 
 app.include_router(document_router)
+
+
+@app.post("/api/save-case")
+def save_case(data: dict, db: Session = Depends(get_db)):
+    analysis = data.get("analysisData", {})
+
+    case = Case(
+        title=analysis.get("caseTitle", data.get("pdfFilename", "Untitled Case")),
+        status="Pending",
+        summary=analysis.get("summary", ""),
+        analysis=str(analysis),
+        pdf_filename=data.get("pdfFilename")
+    )
+
+    db.add(case)
+    db.commit()
+    db.refresh(case)
+
+    return {
+        "caseId": case.id
+    }

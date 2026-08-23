@@ -27,6 +27,17 @@ class Document(Base):
         default=datetime.utcnow
     )
 
+class Case(Base):
+    __tablename__ = "cases"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    status = Column(String, default="Pending")
+    summary = Column(Text, nullable=True)
+    analysis = Column(Text, nullable=True)
+    pdf_filename = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class User(Base):
     __tablename__ = "users"
 

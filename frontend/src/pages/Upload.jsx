@@ -5,33 +5,46 @@ import { Button } from "@/components/ui/Button.jsx"
 import { Card, CardContent } from "@/components/ui/Card.jsx"
 import { api } from "@/lib/api.js"
 
-// pages/Upload.jsx — port of app/(dashboard)/upload/page.tsx
-// Flow: pick a PDF -> POST /api/analyze -> review AI result -> POST /api/save-case
 export default function Upload() {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+
   const navigate = useNavigate()
 
   const onDrop = useCallback((e) => {
     e.preventDefault()
     setDragging(false)
+
     const dropped = e.dataTransfer.files?.[0]
-    if (dropped?.type === "application/pdf") setFile(dropped)
+
+    if (dropped?.type === "application/pdf") {
+      setFile(dropped)
+      setResult(null)
+      setError(null)
+    }
   }, [])
 
   const handleAnalyze = async () => {
     if (!file) return
+
     setAnalyzing(true)
     setError(null)
+    setResult(null)
+
     try {
       const formData = new FormData()
       formData.append("file", file)
+
       const data = await api.analyzeJudgment(formData)
-      if (data.error) throw new Error(data.error)
-      setResult(data.data || data)
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      setResult(data)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -41,55 +54,123 @@ export default function Upload() {
 
   const handleSave = async () => {
     try {
-      const { caseId } = await api.saveCase({ analysisData: result, pdfFilename: file?.name })
-      navigate(`/cases/${caseId}`)
+      const data = await api.saveCase({
+        analysisData: result,
+        pdfFilename: file?.name
+      })
+
+      if (data.caseId) {
+        navigate(`/cases/${data.caseId}`)
+      }
     } catch (err) {
       setError(err.message)
     }
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold">Upload judgment</h1>
+    <div className="space-y-6">
 
-      <div
-        onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-        className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
-          dragging ? "border-primary bg-primary/5" : "border-border"
-        }`}
-      >
-        <UploadCloud className="mb-3 h-10 w-10 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Drag & drop a PDF here, or</p>
-        <label className="mt-3 cursor-pointer text-sm font-medium text-primary">
-          browse files
-          <input
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-        </label>
-        {file && <p className="mt-4 text-sm">{file.name}</p>}
-      </div>
+      <Card>
+        <CardContent className="p-6">
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault()
+              setDragging(true)
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+            className={`border-2 border-dashed rounded-lg p-10 text-center ${
+              dragging ? "border-primary" : ""
+            }`}
+          >
+            <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground" />
 
-      <Button onClick={handleAnalyze} disabled={!file || analyzing}>
-        {analyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {analyzing ? "Analyzing..." : "Analyze with AI"}
-      </Button>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Drag & drop a PDF here, or
+            </p>
+
+            <label className="mt-3 cursor-pointer text-sm font-medium text-primary">
+              browse files
+
+              <input
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const selected = e.target.files?.[0] || null
+                  setFile(selected)
+                  setResult(null)
+                  setError(null)
+                }}
+              />
+            </label>
+
+            {file && (
+              <p className="mt-4 text-sm">
+                {file.name}
+              </p>
+            )}
+          </div>
+
+          {error && (
+            <p className="mt-4 text-sm text-red-500">
+              {error}
+            </p>
+          )}
+
+          <Button
+            onClick={handleAnalyze}
+            disabled={!file || analyzing}
+            className="mt-5"
+          >
+            {analyzing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              "Analyze with AI"
+            )}
+          </Button>
+
+        </CardContent>
+      </Card>
 
       {result && (
         <Card>
-          <CardContent className="space-y-3 pt-6">
-            <h2 className="text-lg font-semibold">{result.caseTitle}</h2>
-            <p className="text-sm text-muted-foreground">{result.summary}</p>
-            <Button onClick={handleSave}>Save case</Button>
+          <CardContent className="space-y-5 p-6">
+
+            <div>
+              <h2 className="text-xl font-bold">
+                {result.filename || file?.name}
+              </h2>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Document ID: {result.document_id}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold">
+                AI Analysis
+              </h3>
+
+              <div className="mt-3 whitespace-pre-wrap rounded-lg bg-muted p-5 text-sm leading-7">
+                {typeof result.analysis === "string"
+                  ? result.analysis
+                  : JSON.stringify(result.analysis, null, 2)}
+              </div>
+            </div>
+
+            <Button onClick={handleSave}>
+              Save Case
+            </Button>
+
           </CardContent>
         </Card>
       )}
+
     </div>
   )
 }

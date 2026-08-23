@@ -1,7 +1,7 @@
 // Thin fetch wrapper for the VerdictFlow backend API.
 // Point VITE_API_URL at wherever the Next.js API routes
 // (app/api/*) or your own backend are deployed.
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000"
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_URL}${path}`, {
@@ -17,8 +17,11 @@ async function request(path, options = {}) {
 
 export const api = {
   // POST /api/analyze — upload a PDF (multipart), get back structured JSON
-  analyzeJudgment: (formData) =>
-    fetch(`${API_URL}/api/analyze`, { method: "POST", body: formData }).then((r) => r.json()),
+analyzeJudgment: (formData) =>
+  fetch(`${API_URL}/documents/upload`, {
+    method: "POST",
+    body: formData
+  }).then((r) => r.json()),
 
   saveCase: (payload) => request("/api/save-case", { method: "POST", body: JSON.stringify(payload) }),
   generatePlan: (payload) => request("/api/generate-plan", { method: "POST", body: JSON.stringify(payload) }),
