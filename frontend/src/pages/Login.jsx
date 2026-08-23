@@ -11,16 +11,38 @@ export default function Login() {
   const [error, setError] = useState(null)
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null)
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
     try {
-      // Replace with: await supabase.auth.signInWithPassword({ email, password })
-      navigate("/dashboard")
+        const response = await fetch("http://127.0.0.1:8000/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            setError(data.detail || "Login failed");
+            return;
+        }
+
+        console.log("Login successful:", data);
+
+        navigate("/dashboard");
+
     } catch (err) {
-      setError(err.message)
+        setError("Cannot connect to backend");
+        console.error(err);
     }
-  }
+};
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -36,7 +58,7 @@ export default function Login() {
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <Button type="submit" className="w-full">Log in</Button>
+          <Button type="submit" className="w-full">Login</Button>
         </form>
         <p className="text-center text-sm text-muted-foreground">
           No account? <Link to="/signup" className="text-primary">Sign up</Link>
